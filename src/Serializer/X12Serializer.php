@@ -2,12 +2,12 @@
 
 namespace Uhin\X12Parser\Serializer;
 
+use Uhin\X12Parser\EDI\X12;
 use Uhin\X12Parser\EDI\Segments\GS;
 use Uhin\X12Parser\EDI\Segments\HL;
+use Uhin\X12Parser\EDI\Segments\ST;
 use Uhin\X12Parser\EDI\Segments\ISA;
 use Uhin\X12Parser\EDI\Segments\Segment;
-use Uhin\X12Parser\EDI\Segments\ST;
-use Uhin\X12Parser\EDI\X12;
 
 class X12Serializer
 {
@@ -33,7 +33,7 @@ class X12Serializer
     /** @var string */
     private $subRepetitionDelimiter;
 
-    public function __construct(X12 &$x12)
+    public function __construct(X12 $x12)
     {
         $this->x12 = $x12;
         $this->addNewLineAfterSegment = false;
