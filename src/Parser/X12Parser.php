@@ -92,37 +92,36 @@ class X12Parser
             $this->logger->info("Found data elements", $dataElements);
 
             // Check for repetition delimiters... If there are any, split the element into an array
-            for ($i = 1; $i < count($dataElements); $i++) {
-                if ($dataElements[0] === 'ISA' && ($i === 11 || $i === 16)) {
-                    // Skip this check for ISA11 and ISA16
-                    continue;
-                }
-                
-                if (strpos($dataElements[$i], $repetitionDelimiter) !== false) {
-                    $dataElements[$i] = explode($repetitionDelimiter, $dataElements[$i]);
+            if ($repetitionDelimiter !== 'U') {
+                for ($i = 1; $i < count($dataElements); $i++) {
+                    if ($dataElements[0] === 'ISA' && ($i === 11 || $i === 16)) {
+                        // Skip this check for ISA11 and ISA16
+                        continue;
+                    }
+                    
+                    if (strpos($dataElements[$i], $repetitionDelimiter) !== false) {
+                        $dataElements[$i] = explode($repetitionDelimiter, $dataElements[$i]);
 
-                    // Check for sub-repetition delimiters... If there are any, split the sub element into an array
-                    for ($j = 0; $j < count($dataElements[$i]); $j++) {
-                        if (strpos($dataElements[$i][$j], $subRepetitionDelimiter) !== false) {
-                            $dataElements[$i][$j] = explode($subRepetitionDelimiter, $dataElements[$i][$j]);
+                        // Check for sub-repetition delimiters... If there are any, split the sub element into an array
+                        for ($j = 0; $j < count($dataElements[$i]); $j++) {
+                            if (strpos($dataElements[$i][$j], $subRepetitionDelimiter) !== false) {
+                                $dataElements[$i][$j] = explode($subRepetitionDelimiter, $dataElements[$i][$j]);
+                            }
                         }
                     }
-                }
 
-                // Check for any lingering sub-repetition elements (this happens when you have sub-repetition elements with only one parent repetition element)
-                if (is_string($dataElements[$i]) && strpos($dataElements[$i], $subRepetitionDelimiter) !== false) {
-                    $dataElements[$i] = [explode($subRepetitionDelimiter, $dataElements[$i])];
+                    // Check for any lingering sub-repetition elements (this happens when you have sub-repetition elements with only one parent repetition element)
+                    if (is_string($dataElements[$i]) && strpos($dataElements[$i], $subRepetitionDelimiter) !== false) {
+                        $dataElements[$i] = [explode($subRepetitionDelimiter, $dataElements[$i])];
+                    }
                 }
             }
 
             // Handle the parsed segment
             switch ($dataElements[0]) {
-
                 case 'ISA':
                     $x12->ISA[] = new ISA($dataElements, $segmentDelimiter, $dataElementDelimiter, $repetitionDelimiter, $subRepetitionDelimiter);
                     break;
-
-
                 case 'IEA':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -136,8 +135,6 @@ class X12Parser
                         break 2;
                     }
                     break;
-
-
                 case 'GS':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -145,8 +142,6 @@ class X12Parser
                     // Add this GS to the ISA
                     $isa->GS[] = new GS($dataElements);
                     break;
-
-
                 case 'GE':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -157,8 +152,6 @@ class X12Parser
                     // Add this GE to the GS
                     $gs->GE = new Segment($dataElements);
                     break;
-
-
                 case 'ST':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -169,8 +162,6 @@ class X12Parser
                     // Add this ST to the GS
                     $gs->ST[] = new ST($dataElements);
                     break;
-
-
                 case 'SE':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -184,8 +175,6 @@ class X12Parser
                     // Add this SE to the ST
                     $st->SE = new Segment($dataElements);
                     break;
-
-
                 case 'HL':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -212,10 +201,7 @@ class X12Parser
                         }
                     }
                     $parent->HL[] = $hl;
-
                     break;
-
-
                 case 'TA1':
                     /** @var ISA $isa */
                     $isa = end($x12->ISA);
@@ -223,8 +209,6 @@ class X12Parser
                     // Add this TA1 to the ISA
                     $isa->TA1 = new Segment($dataElements);
                     break;
-
-
                 default:
                     // This is some other segment that we don't account for above, so handle it now...
                     $segment = new Segment($dataElements);
@@ -299,8 +283,7 @@ class X12Parser
         if (strlen($dataElements[16]) < 2) {
             return false;
         }
-
-        // Get the other delimiters from the ISA line
+        
         $rep = $dataElements[11];
         $subRep = $dataElements[16][0];
         $segment = $dataElements[16][1];
@@ -311,8 +294,8 @@ class X12Parser
         // Check if all the delimiters are valid before setting any of them
         if (
             strlen($dataEl) === 1
-            && strlen($rep) === 1
-            && strlen($subRep) === 1
+            && strlen((string) $rep) === 1
+            && strlen((string) $subRep) === 1
             && strlen($segment) === 1
         ) {
             // These are set by reference, so the variables passed to this function get set here
@@ -361,7 +344,7 @@ class X12Parser
 
         /** @var GS $gs */
         $gs = end($isa->GS);
-
+        
         /** @var ST $st */
         $st = end($gs->ST);
 
